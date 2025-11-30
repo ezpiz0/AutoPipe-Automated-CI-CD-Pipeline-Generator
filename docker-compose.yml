@@ -1,0 +1,87 @@
+version: '3.8'
+
+services:
+  gitlab:
+    image: gitlab/gitlab-ce:latest
+    hostname: gitlab.example.com
+    environment:
+      GITLAB_OMNIBUS_CONFIG: |
+        external_url 'http://gitlab.example.com'
+        registry_external_url 'http://gitlab.example.com:5050'
+        gitlab_rails['registry_enabled'] = true
+        registry['enable'] = true
+        registry_nginx['enable'] = true
+        registry_nginx['listen_port'] = 5050
+        registry_nginx['listen_https'] = false
+        # Increase artifact size limits (1GB)
+        gitlab_rails['max_attachment_size'] = 1073741824
+        nginx['client_max_body_size'] = '1024m'
+        # CI/CD artifact settings
+        gitlab_rails['artifacts_enabled'] = true
+        # Performance settings
+        puma['worker_processes'] = 4
+        puma['min_threads'] = 2
+        puma['max_threads'] = 8
+        sidekiq['max_concurrency'] = 20
+        postgresql['shared_buffers'] = "512MB"
+        postgresql['work_mem'] = "32MB"
+        prometheus_monitoring['enable'] = false
+        # Git settings for large repos
+        gitlab_rails['git_timeout'] = 600
+    ports:
+      - "8080:80"
+      - "443:443"
+      - "2222:22"
+      - "5050:5050"
+    volumes:
+      - gitlab_config:/etc/gitlab
+      - gitlab_logs:/var/log/gitlab
+      - gitlab_data:/var/opt/gitlab
+    networks:
+      - autopipe-net
+    deploy:
+      resources:
+        limits:
+          memory: 8G
+        reservations:
+          memory: 6G
+    shm_size: '512m'
+
+  gitlab-runner:
+    image: gitlab/gitlab-runner:alpine
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - gitlab_runner_config:/etc/gitlab-runner
+    networks:
+      - autopipe-net
+    depends_on:
+      - gitlab
+
+  sonarqube:
+    image: sonarqube:lts
+    ports:
+      - "9000:9000"
+    networks:
+      - autopipe-net
+    environment:
+      - SONAR_ES_BOOTSTRAP_CHECKS_DISABLE=true
+
+  nexus:
+    image: sonatype/nexus3
+    ports:
+      - "8081:8081"
+    volumes:
+      - nexus_data:/nexus-data
+    networks:
+      - autopipe-net
+
+volumes:
+  gitlab_config:
+  gitlab_logs:
+  gitlab_data:
+  gitlab_runner_config:
+  nexus_data:
+
+networks:
+  autopipe-net:
+    driver: bridge

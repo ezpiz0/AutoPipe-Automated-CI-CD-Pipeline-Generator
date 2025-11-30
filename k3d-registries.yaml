@@ -1,0 +1,9 @@
+mirrors:
+  "gitlab.example.com:5050":
+    endpoint:
+      - "http://gitlab.example.com:5050"
+configs:
+  "gitlab.example.com:5050":
+    auth:
+      username: root
+      password: glpat-CwhkYOI7kogStHwogdgSyG86MQp1OjEH.01.0w1ubzj2f
