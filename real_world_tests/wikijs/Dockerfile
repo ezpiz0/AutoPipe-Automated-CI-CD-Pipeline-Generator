@@ -1,0 +1,17 @@
+# syntax=docker/dockerfile:1.4
+
+FROM node:10-alpine AS builder
+WORKDIR /app
+COPY package*.json ./
+COPY yarn.lock ./
+RUN --mount=type=cache,target=/usr/local/share/.cache/yarn yarn install --frozen-lockfile
+COPY . .
+RUN npm run build
+
+FROM node:10-alpine
+WORKDIR /app
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/package.json ./
+CMD ["npm", "run", "start:prod"]
+

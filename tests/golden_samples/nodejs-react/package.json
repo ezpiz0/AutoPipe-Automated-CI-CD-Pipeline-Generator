@@ -1,0 +1,22 @@
+{
+  "name": "react-golden-sample",
+  "version": "1.0.0",
+  "description": "React Golden Sample for AutoPipe",
+  "scripts": {
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "start:prod": "serve -s build"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-scripts": "5.0.1"
+  },
+  "devDependencies": {
+    "@testing-library/react": "^13.4.0",
+    "@testing-library/jest-dom": "^5.16.5"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

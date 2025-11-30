@@ -1,0 +1,51 @@
+
+    def _analyze_ant(self, ant_path: Path) -> DetectedStack:
+        """Analyze Apache Ant build.xml for Java version and dependencies."""
+        try:
+            tree = ET.parse(ant_path)
+            root = tree.getroot()
+            
+            # Default Java version
+            java_version = "17"
+            
+            # Try to find javac task with target/source attributes
+            for javac in root.iter('javac'):
+                target = javac.get('target')
+                source = javac.get('source')
+                if target:
+                    java_version = target
+                    break
+                if source:
+                    java_version = source
+                    break
+            
+            # Try to find property definitions
+            for prop in root.iter('property'):
+                name = prop.get('name', '')
+                if 'java.target' in name or 'javac.target' in name:
+                    value = prop.get('value')
+                    if value:
+                        java_version = value
+                        break
+            
+            # Detect framework (basic)
+            framework = Framework.NONE
+            content = ant_path.read_text(encoding='utf-8')
+            if 'spring' in content.lower():
+                framework = Framework.SPRING_BOOT
+            
+            return DetectedStack(
+                language=Language.JAVA,
+                framework=framework,
+                build_tool=BuildTool.ANT,
+                language_version=java_version,
+                java_version=java_version
+            )
+        except Exception as e:
+            # Fallback if parsing fails
+            return DetectedStack(
+                language=Language.JAVA, 
+                build_tool=BuildTool.ANT,
+                language_version="17",
+                java_version="17"
+            )
